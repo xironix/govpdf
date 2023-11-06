@@ -2,6 +2,7 @@ import pandas as pd
 import random
 from datetime import datetime, timedelta
 from PyPDF2 import PdfReader, PdfWriter
+import data
 
 # Read the CSV file into a DataFrame
 jobs_df = pd.read_csv('jobs.csv')
@@ -27,42 +28,36 @@ def generate_random_dates(num_random_dates):
     return random_dates
 
 
-def generate_random_result(activity_types, results_mapping):
-    results = {}
-    for activity_type in activity_types:
-        if activity_type not in results_mapping:
-            raise ValueError(f"Activity type '{activity_type}' is not in the results mapping.")
-        results[activity_type] = random.choice(results_mapping[activity_type])
-    return results
+def generate_random_result(activity_type, results_mapping):
+    if activity_type in results_mapping:
+        return random.choice(results_mapping[activity_type])
+    else:
+        return random.choice(result_mapping["Job Application"])
+
+    return None
 
 # Function to populate the PDF form
 def populate_pdf_form(pdf_template_path, output_pdf_path, jobs_df, results_mapping, num_rows_to_fill, resume_prep,
                       min_rows, max_rows):
+    applied_indices = []
     sorted_dates = sorted(generate_random_dates(num_rows_to_fill))
     pdf_reader = PdfReader(pdf_template_path)
     pdf_writer = PdfWriter()
 
     for i, page in enumerate(pdf_reader.pages):
         pdf_writer.add_page(page)
+
         for j in range(num_rows_to_fill):
             sorted_dates = sorted(generate_random_dates(num_rows_to_fill))
-            activity_type = jobs_df.loc[j, 'ActivityType']
-
-            if activity_type not in results_mapping:
-                raise ValueError(f"Activity type '{activity_type}' is not a valid type in the results mapping.")
-
-            result_for_row = generate_random_result(activity_type, results_mapping)
+            result_for_row = generate_random_result(random.choice(list(results_mapping.keys())), results_mapping)
 
             field_values = {
-                f'DATERow{j + 1}': generate_random_dates(num_rows_to_fill),
+                f'DATERow{j + 1}': sorted_dates[j],
                 f'TYPERow{j + 1}': result_for_row,
-                f'RESULTSRow{j + 1}': generate_random_result(result_for_row, results_mapping),
+                f'RESULTSRow{j + 1}': result_for_row,
                 f'LOCATIONRow{j + 1}': 'Home' if result_for_row == 'LinkedIn Profile Update' else f"{jobs_df.at[j, 'COMPANY']} {jobs_df.at[j, 'LOCATION']}",
                 f'CONTACTRow{j + 1}': 'N/A'
             }
-
-            if activity_type in contact_required_types and not (j == 0 and resume_prep):
-                field_values[f'CONTACTRow{j + 1}'] = jobs_df.at[j, 'CONTACT']
 
             if j == 0 and resume_prep:
                 field_values.update({
@@ -78,15 +73,16 @@ def populate_pdf_form(pdf_template_path, output_pdf_path, jobs_df, results_mappi
     with open(output_pdf_path, "wb") as output_pdf_file:
         pdf_writer.write(output_pdf_file)
 
-    return output_pdf_path
-
+    return output_pdf_path, applied_indices
 
 # Main function
-#if __name__ == '__main__':
+if __name__ == '__main__':
     # Define file paths
     jobs_csv_path = 'jobs.csv'
+    applied_csv_path = 'applied_jobs.csv'  # Assuming you have an applied jobs CSV file
     output_pdf_path = 'HR0077_populated.pdf'
     pdf_template_path = "HR0077.pdf"
+    resume_prep = True
 
     # Define the range for the number of rows in the PDF
     min_rows = 20
@@ -103,7 +99,6 @@ def populate_pdf_form(pdf_template_path, output_pdf_path, jobs_df, results_mappi
         'Cover Letter Drafting': ['Draft Completed', 'Sent with Application'],
         'Recruitment Call': ['Scheduled Interview', 'Information Received'],
         'Online Course': ['Course Started', 'Course Completed'],
-        'Portfolio Update': ['Portfolio Enhanced', 'New Projects Added'],
         'Career Counseling': ['Session Attended', 'Action Plan Created'],
         'LinkedIn Profile Update': ['Profile Updated', 'New Connections Made'],
         'Informational Interview': ['Insights Gained', 'Referral Obtained']
@@ -117,17 +112,22 @@ def populate_pdf_form(pdf_template_path, output_pdf_path, jobs_df, results_mappi
     for activity_type in activity_types:
         print(activity_type)
 
-    random_result = generate_random_result(activity_types, results_mapping)
-
-    # Read jobs data
-    jobs_df = pd.read_csv(jobs_csv_path)
+    # Instead of reading the CSV directly, use the load_data function from data.py
+    jobs_df = data.load_data(jobs_csv_path)
+    # If you have an applied jobs dataframe, load it as well
+    # applied_df = data.load_data(applied_csv_path)
 
     # Determine the number of rows to populate in the PDF
     num_rows_to_fill = random.randint(min_rows, max_rows)
 
-    # Decide whether resume preparation is required
-    resume_prep = True  # Replace with your logic
-
     # Populate the PDF form
     populated_pdf_path = populate_pdf_form(pdf_template_path, output_pdf_path, jobs_df, results_mapping, num_rows_to_fill, resume_prep, min_rows, max_rows)
     print(f"PDF form populated and saved to {populated_pdf_path}")
+
+    # Move the applied jobs from jobs_df to applied_df
+    #for index in applied_job_indices:
+    #    jobs_df, applied_df = data.move_applied_entries(jobs_df, applied_df, index)
+
+    # Save the updated jobs and applied jobs dataframes
+    #data.save_data(jobs_df, jobs_csv_path)
+    #data.save_data(applied_df, applied_csv_path)
