@@ -1,6 +1,5 @@
 from PyPDF2 import PdfReader, PdfWriter
 from datetime import datetime, timedelta
-import pandas as pd
 import random
 import data
 
@@ -37,7 +36,6 @@ def generate_random_result(activity_type, results_mapping):
 
 def populate_pdf_form(pdf_template_path, jobs_df, num_rows_to_fill, resume_prep):
     # Extract the possible results and their weights for the given activity type
-    sorted_dates = sorted(generate_random_dates(num_rows_to_fill))
     pdf_reader = PdfReader(pdf_template_path)
     pdf_writer = PdfWriter()
     output_pdf_path = 'HR0077_populated.pdf'
@@ -53,7 +51,6 @@ def populate_pdf_form(pdf_template_path, jobs_df, num_rows_to_fill, resume_prep)
 
             # It appears you want to use selected_activity_type here, not activity_type
             print(f"Processing activity type: {selected_activity_type}")
-            result_for_row = generate_random_result(selected_activity_type, data.get_result_mapping())
 
             field_values = {
                 f'DATERow{j + 1}': sorted_dates[j],

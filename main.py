@@ -11,8 +11,6 @@ if __name__ == '__main__':
     jobs_csv_path = 'jobs.csv'
     applied_csv_path = 'applied_jobs.csv'  # Assuming you have an applied jobs CSV file
     pdf_template_path = "HR0077.pdf"
-    resume_prep = True
-
 
     # Instead of reading the CSV directly, use the load_data function from data.py
     jobs_df = data.load_data(jobs_csv_path)
