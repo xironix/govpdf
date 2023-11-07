@@ -57,7 +57,7 @@ def populate_pdf_form(pdf_template_path, jobs_df, num_rows_to_fill, resume_prep)
                 f'TYPERow{j + 1}': selected_activity_type,
                 f'RESULTSRow{j + 1}': selected_result,
                 f'LOCATIONRow{j + 1}': 'Home',
-                f'CONTACTRow{j + 1}': 'N/A'  # Default to 'N/A'
+                f'CONTACTRow{j + 1}': 'N/A'
             }
 
             if selected_activity_type == 'Job Application':
